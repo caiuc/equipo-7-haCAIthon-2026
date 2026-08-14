@@ -70,6 +70,9 @@ model Medication {
   inventories Inventory[]
   consumptions ConsumptionRecord[]
   suppliers MedicationSupplier[]
+  stockRequests StockRequest[]
+  transfers Transfer[]
+  purchaseRequests PurchaseRequest[]
 }
 
 model Inventory {
@@ -84,6 +87,9 @@ model Inventory {
   nextRestockDate       DateTime
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  @@unique([healthCenterId, medicationId])
+  @@index([medicationId])
 }
 
 model ConsumptionRecord {
@@ -94,6 +100,8 @@ model ConsumptionRecord {
   medicationId    String
   date            DateTime
   quantityConsumed Int
+
+  @@index([healthCenterId, medicationId, date])
 }
 
 model Supplier {
@@ -115,6 +123,8 @@ model MedicationSupplier {
   medicationId String
   supplier     Supplier @relation(fields: [supplierId], references: [id])
   supplierId   String
+
+  @@unique([medicationId, supplierId])
 }
 
 model StockRequest {
@@ -126,6 +136,7 @@ model StockRequest {
   quantityNeeded         Int
   status                 StockRequestStatus @default(SEARCHING)
   createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   offers StockOffer[]
 }
@@ -139,6 +150,7 @@ model StockOffer {
   quantityOffered     Int
   distanceKm          Float
   accepted            Boolean @default(false)
+  selectedQuantity    Int @default(0)
   createdAt           DateTime @default(now())
 }
 
@@ -153,6 +165,7 @@ model Transfer {
   quantity        Int
   status          TransferStatus @default(PENDING)
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model PurchaseRequest {
@@ -166,4 +179,5 @@ model PurchaseRequest {
   quantity      Int
   status        PurchaseRequestStatus @default(PENDING)
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

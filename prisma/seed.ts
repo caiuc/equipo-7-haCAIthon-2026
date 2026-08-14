@@ -1,89 +1,306 @@
-import { PrismaClient } from '@prisma/client'
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { HealthCenterType, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL no esta definido para el seed");
+}
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+const DAY = 24 * 60 * 60 * 1000;
+
+function daysFromNow(days: number) {
+  return new Date(Date.now() + days * DAY);
+}
 
 async function main() {
-  await prisma.purchaseRequest.deleteMany()
-  await prisma.transfer.deleteMany()
-  await prisma.stockOffer.deleteMany()
-  await prisma.stockRequest.deleteMany()
-  await prisma.inventory.deleteMany()
-  await prisma.medicationSupplier.deleteMany()
-  await prisma.supplier.deleteMany()
-  await prisma.consumptionRecord.deleteMany()
-  await prisma.medication.deleteMany()
-  await prisma.healthCenter.deleteMany()
+  await prisma.purchaseRequest.deleteMany();
+  await prisma.transfer.deleteMany();
+  await prisma.stockOffer.deleteMany();
+  await prisma.stockRequest.deleteMany();
+  await prisma.inventory.deleteMany();
+  await prisma.medicationSupplier.deleteMany();
+  await prisma.supplier.deleteMany();
+  await prisma.consumptionRecord.deleteMany();
+  await prisma.medication.deleteMany();
+  await prisma.healthCenter.deleteMany();
 
-  // Suppliers
-  const supplierX = await prisma.supplier.create({ data: { name: 'Proveedor X', contactName: 'Ana Ruiz', email: 'ana@provx.example', phone: '+56912345678' } })
-  const supplierY = await prisma.supplier.create({ data: { name: 'Proveedor Y', contactName: 'Carlos Vega', email: 'carlos@provy.example', phone: '+56987654321' } })
+  const supplierX = await prisma.supplier.create({
+    data: {
+      name: "Proveedor X",
+      contactName: "Ana Ruiz",
+      email: "ana@proveedorx.cl",
+      phone: "+56912345678",
+    },
+  });
 
-  // Medications
-  const meds = await Promise.all([
-    prisma.medication.create({ data: { name: 'Losartán', dosage: '50 mg', unit: 'unidad' } }),
-    prisma.medication.create({ data: { name: 'Metformina', dosage: '850 mg', unit: 'unidad' } }),
-    prisma.medication.create({ data: { name: 'Paracetamol', dosage: '500 mg', unit: 'unidad' } }),
-    prisma.medication.create({ data: { name: 'Insulina NPH', dosage: '', unit: 'unidad' } }),
-    prisma.medication.create({ data: { name: 'Atorvastatina', dosage: '20 mg', unit: 'unidad' } }),
-  ])
+  const supplierY = await prisma.supplier.create({
+    data: {
+      name: "Proveedor Y",
+      contactName: "Carlos Vega",
+      email: "carlos@proveedory.cl",
+      phone: "+56987654321",
+    },
+  });
 
-  // Link meds to suppliers
-  await prisma.medicationSupplier.create({ data: { medicationId: meds[0].id, supplierId: supplierX.id } })
-  await prisma.medicationSupplier.create({ data: { medicationId: meds[1].id, supplierId: supplierY.id } })
-  await prisma.medicationSupplier.create({ data: { medicationId: meds[2].id, supplierId: supplierX.id } })
+  const medications = await Promise.all([
+    prisma.medication.create({ data: { name: "Losartan", dosage: "50 mg", unit: "unidad" } }),
+    prisma.medication.create({ data: { name: "Metformina", dosage: "850 mg", unit: "unidad" } }),
+    prisma.medication.create({ data: { name: "Paracetamol", dosage: "500 mg", unit: "unidad" } }),
+    prisma.medication.create({ data: { name: "Insulina NPH", dosage: "UI", unit: "unidad" } }),
+    prisma.medication.create({ data: { name: "Atorvastatina", dosage: "20 mg", unit: "unidad" } }),
+  ]);
 
-  // Health centers with plausible coords (Santiago areas)
-  const centersData = [
-    { name: 'CESFAM A', type: 'CESFAM', latitude: -33.493, longitude: -70.600 },
-    { name: 'CESFAM B', type: 'CESFAM', latitude: -33.485, longitude: -70.610 },
-    { name: 'CESFAM C', type: 'CESFAM', latitude: -33.470, longitude: -70.620 },
-    { name: 'COSAM San Joaquín', type: 'COSAM', latitude: -33.498, longitude: -70.606 },
-    { name: 'COSAM La Florida', type: 'COSAM', latitude: -33.517, longitude: -70.572 },
-    { name: 'COSAM Macul', type: 'COSAM', latitude: -33.475, longitude: -70.614 },
-    { name: 'SAPU San Miguel', type: 'SAPU', latitude: -33.484, longitude: -70.656 },
-    { name: 'Hospital Barros Luco Trudeau', type: 'HOSPITAL', latitude: -33.479, longitude: -70.667 },
-  ]
-
-  const centers = [] as any[]
-  for (const c of centersData) {
-    const created = await prisma.healthCenter.create({ data: { name: c.name, type: c.type as any, address: c.name + ' address', latitude: c.latitude, longitude: c.longitude } })
-    centers.push(created)
+  for (const medication of medications) {
+    await prisma.medicationSupplier.create({
+      data: {
+        medicationId: medication.id,
+        supplierId: medication.name === "Insulina NPH" ? supplierY.id : supplierX.id,
+      },
+    });
   }
 
-  const now = new Date()
+  const healthCentersInput: Array<{
+    name: string;
+    type: HealthCenterType;
+    address: string;
+    latitude: number;
+    longitude: number;
+  }> = [
+    {
+      name: "CESFAM A",
+      type: HealthCenterType.CESFAM,
+      address: "Sector Vicuña Mackenna, San Joaquin",
+      latitude: -33.4932,
+      longitude: -70.6007,
+    },
+    {
+      name: "CESFAM B",
+      type: HealthCenterType.CESFAM,
+      address: "Limite con La Florida, San Joaquin",
+      latitude: -33.4858,
+      longitude: -70.6112,
+    },
+    {
+      name: "CESFAM C",
+      type: HealthCenterType.CESFAM,
+      address: "Sector La Legua, San Joaquin",
+      latitude: -33.5003,
+      longitude: -70.6339,
+    },
+    {
+      name: "COSAM San Joaquin",
+      type: HealthCenterType.COSAM,
+      address: "Santa Rosa, San Joaquin",
+      latitude: -33.4978,
+      longitude: -70.6215,
+    },
+    {
+      name: "COSAM La Florida",
+      type: HealthCenterType.COSAM,
+      address: "Avenida La Florida",
+      latitude: -33.5171,
+      longitude: -70.5752,
+    },
+    {
+      name: "COSAM Macul",
+      type: HealthCenterType.COSAM,
+      address: "Avenida Macul",
+      latitude: -33.4788,
+      longitude: -70.6001,
+    },
+    {
+      name: "SAPU San Miguel",
+      type: HealthCenterType.SAPU,
+      address: "Gran Avenida, San Miguel",
+      latitude: -33.4874,
+      longitude: -70.6578,
+    },
+    {
+      name: "Hospital Barros Luco Trudeau",
+      type: HealthCenterType.HOSPITAL,
+      address: "Gran Avenida 3204, San Miguel",
+      latitude: -33.4866,
+      longitude: -70.6529,
+    },
+  ];
 
-  // Inventories: create for a subset of medications with varied stocks
-  // CESFAM B: Losartán stock 100, demand 30, next restock 8 days, safetyStockDays 2
-  const cesfamB = centers.find((c) => c.name === 'CESFAM B')
-  const losartan = meds.find((m) => m.name === 'Losartán')
-  await prisma.inventory.create({ data: { healthCenterId: cesfamB.id, medicationId: losartan.id, currentStock: 100, estimatedDailyDemand: 30, safetyStockDays: 2, nextRestockDate: new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000) } })
+  const healthCenters = await Promise.all(
+    healthCentersInput.map((center) =>
+      prisma.healthCenter.create({
+        data: center,
+      }),
+    ),
+  );
 
-  // CESFAM A: Losartán stock 1000, demand 25
-  const cesfamA = centers.find((c) => c.name === 'CESFAM A')
-  await prisma.inventory.create({ data: { healthCenterId: cesfamA.id, medicationId: losartan.id, currentStock: 1000, estimatedDailyDemand: 25, safetyStockDays: 3, nextRestockDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000) } })
+  const centerByName = Object.fromEntries(
+    healthCenters.map((center) => [center.name, center]),
+  );
+  const medicationByName = Object.fromEntries(
+    medications.map((medication) => [medication.name, medication]),
+  );
 
-  // Other centers inventories (mixed)
-  const cesfamC = centers.find((c) => c.name === 'CESFAM C')
-  await prisma.inventory.create({ data: { healthCenterId: cesfamC.id, medicationId: losartan.id, currentStock: 150, estimatedDailyDemand: 20, safetyStockDays: 2, nextRestockDate: new Date(now.getTime() + 12 * 24 * 60 * 60 * 1000) } })
+  const losartan = medicationByName["Losartan"];
 
-  const cosamSJ = centers.find((c) => c.name === 'COSAM San Joaquín')
-  await prisma.inventory.create({ data: { healthCenterId: cosamSJ.id, medicationId: losartan.id, currentStock: 300, estimatedDailyDemand: 10, safetyStockDays: 3, nextRestockDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) } })
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["CESFAM B"].id,
+      medicationId: losartan.id,
+      currentStock: 100,
+      estimatedDailyDemand: 30,
+      safetyStockDays: 2,
+      nextRestockDate: daysFromNow(8),
+    },
+  });
 
-  // Add inventories for other medications for demo
-  for (const center of centers) {
-    for (const med of meds.slice(1)) {
-      await prisma.inventory.create({ data: { healthCenterId: center.id, medicationId: med.id, currentStock: Math.floor(200 + Math.random() * 800), estimatedDailyDemand: Math.floor(5 + Math.random() * 30), safetyStockDays: 3, nextRestockDate: new Date(now.getTime() + (7 + Math.floor(Math.random() * 10)) * 24 * 60 * 60 * 1000) } })
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["CESFAM A"].id,
+      medicationId: losartan.id,
+      currentStock: 1000,
+      estimatedDailyDemand: 25,
+      safetyStockDays: 3,
+      nextRestockDate: daysFromNow(10),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["CESFAM C"].id,
+      medicationId: losartan.id,
+      currentStock: 130,
+      estimatedDailyDemand: 18,
+      safetyStockDays: 2,
+      nextRestockDate: daysFromNow(9),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["COSAM San Joaquin"].id,
+      medicationId: losartan.id,
+      currentStock: 320,
+      estimatedDailyDemand: 11,
+      safetyStockDays: 3,
+      nextRestockDate: daysFromNow(7),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["COSAM La Florida"].id,
+      medicationId: losartan.id,
+      currentStock: 260,
+      estimatedDailyDemand: 16,
+      safetyStockDays: 3,
+      nextRestockDate: daysFromNow(8),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["COSAM Macul"].id,
+      medicationId: losartan.id,
+      currentStock: 310,
+      estimatedDailyDemand: 14,
+      safetyStockDays: 3,
+      nextRestockDate: daysFromNow(9),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["SAPU San Miguel"].id,
+      medicationId: losartan.id,
+      currentStock: 210,
+      estimatedDailyDemand: 12,
+      safetyStockDays: 2,
+      nextRestockDate: daysFromNow(6),
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      healthCenterId: centerByName["Hospital Barros Luco Trudeau"].id,
+      medicationId: losartan.id,
+      currentStock: 900,
+      estimatedDailyDemand: 35,
+      safetyStockDays: 4,
+      nextRestockDate: daysFromNow(7),
+    },
+  });
+
+  const templateByMedication: Record<string, { baseStock: number; baseDemand: number }> = {
+    Metformina: { baseStock: 520, baseDemand: 22 },
+    Paracetamol: { baseStock: 780, baseDemand: 34 },
+    "Insulina NPH": { baseStock: 310, baseDemand: 12 },
+    Atorvastatina: { baseStock: 460, baseDemand: 16 },
+  };
+
+  for (const center of healthCenters) {
+    for (const [name, template] of Object.entries(templateByMedication)) {
+      const medication = medicationByName[name];
+      const centerFactor =
+        center.type === HealthCenterType.HOSPITAL
+          ? 1.5
+          : center.type === HealthCenterType.SAPU
+            ? 1.2
+            : 1;
+      const stock = Math.round(template.baseStock * centerFactor);
+      const demand = Math.round(template.baseDemand * centerFactor);
+
+      await prisma.inventory.create({
+        data: {
+          healthCenterId: center.id,
+          medicationId: medication.id,
+          currentStock: stock,
+          estimatedDailyDemand: demand,
+          safetyStockDays: 3,
+          nextRestockDate: daysFromNow(7 + (demand % 4)),
+        },
+      });
     }
   }
 
-  console.log('Seed completed')
+  for (const center of healthCenters) {
+    for (const medication of medications) {
+      for (let dayOffset = 1; dayOffset <= 7; dayOffset += 1) {
+        const inventory = await prisma.inventory.findFirstOrThrow({
+          where: {
+            healthCenterId: center.id,
+            medicationId: medication.id,
+          },
+        });
+
+        await prisma.consumptionRecord.create({
+          data: {
+            healthCenterId: center.id,
+            medicationId: medication.id,
+            date: daysFromNow(-dayOffset),
+            quantityConsumed: Math.max(
+              1,
+              Math.round(
+                inventory.estimatedDailyDemand * (0.85 + (dayOffset % 3) * 0.1),
+              ),
+            ),
+          },
+        });
+      }
+    }
+  }
+
+  console.log("Seed completed: MedStock demo data ready");
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

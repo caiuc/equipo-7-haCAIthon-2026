@@ -8,6 +8,26 @@ Base inicial en Next.js para un sistema distribuido de control de stock de medic
 npm run dev
 ```
 
+## Inicializar datos del MVP
+
+```bash
+npm run db:migrate -- --name medstock_mvp
+npm run db:seed
+```
+
+Con esto queda cargado el escenario demo:
+
+- `CESFAM B` con riesgo de quiebre para `Losartan 50 mg`.
+- `CESFAM A` con excedente suficiente para cubrir deficit temporal.
+
+## Flujo de demo recomendado
+
+1. Abre `Dashboard`.
+2. Pulsa `Resolver con MedStock`.
+3. Revisa ofertas de nodos cercanos.
+4. Pulsa `Confirmar transferencia`.
+5. Verifica el resultado en `Transferencias` y `Compras`.
+
 ## Base de datos local con Docker
 
 Levanta PostgreSQL con:
