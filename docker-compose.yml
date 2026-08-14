@@ -29,3 +29,4 @@ services:
 
 volumes:
   medstock_pgdata:
+docker
