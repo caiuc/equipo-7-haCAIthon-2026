@@ -1,16 +1,31 @@
-FROM node:20-alpine
+services:
+  postgres:
+    image: postgres:16
+    container_name: medstock-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medstock
+    volumes:
+      - medstock_pgdata:/var/lib/postgresql/data
 
-WORKDIR /app
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medstock-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/medstock?schema=public"
+      NODE_ENV: production
+    depends_on:
+      - postgres
+    command: sh -c "npm install && npx prisma generate && npx prisma migrate deploy || true && npm run start"
 
-# Copy everything, including local node_modules
-COPY . .
-
-# Generate Prisma client and build Next.js
-RUN npx prisma generate
-RUN npm run build
-
-ENV NODE_ENV=production
-
-EXPOSE 3000
-
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy || true && npm run start"]
+volumes:
+  medstock_pgdata:
