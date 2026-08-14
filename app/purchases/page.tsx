@@ -11,7 +11,7 @@ export default async function PurchasesPage() {
     <main className="space-y-6">
       <Header
         title="Solicitudes de compra"
-        subtitle="Reabastecimiento externo generado automaticamente"
+        subtitle="Reabastecimiento externo generado automáticamente"
       />
       <PurchaseRequestsView rows={purchaseRequests} />
     </main>

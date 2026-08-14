@@ -12,14 +12,14 @@ type InboxOffer = {
 export function NodeInbox({ offers }: { offers: InboxOffer[] }) {
   return (
     <section className="rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
-      <h3 className="text-xl font-semibold text-slate-950">Bandeja automatica del nodo</h3>
+      <h3 className="text-xl font-semibold text-slate-950">Bandeja automática del nodo</h3>
       <p className="mt-2 text-sm text-slate-600">
         Respuestas generadas cuando otro centro de la red consulta si este nodo puede compartir stock.
       </p>
 
       {offers.length === 0 ? (
         <p className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-          Este nodo aun no ha recibido solicitudes de abastecimiento.
+          Este nodo aún no ha recibido solicitudes de abastecimiento.
         </p>
       ) : (
         <div className="mt-5 space-y-3">

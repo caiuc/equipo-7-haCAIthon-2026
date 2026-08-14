@@ -45,6 +45,19 @@ function markerColor(node: Node) {
   return "#16a34a";
 }
 
+function relationLabel(relation: Node["supplyRelation"]) {
+  if (relation === "CURRENT") return "Nodo activo";
+  if (relation === "IN_NETWORK") return "Dentro de tu red";
+  if (relation === "OUT_OF_NETWORK") return "Fuera de tu red";
+  return "Sin nodo activo";
+}
+
+function statusLabel(status: Node["status"]) {
+  if (status === "CRITICAL") return "Crítico";
+  if (status === "WARNING") return "Advertencia";
+  return "Normal";
+}
+
 export function NetworkMap({
   nodes,
   transfers,
@@ -118,7 +131,7 @@ export function NetworkMap({
         });
 
         const infoWindow = new googleMaps.maps.InfoWindow({
-          content: `<div style=\"font-family:Arial,sans-serif;padding:4px 2px;\"><strong>${node.name}</strong><br/>${node.type}<br/>Usuario: ${node.username ?? "sin credencial"}<br/>Relacion: ${node.supplyRelation ?? "sin nodo activo"}<br/>Estado: ${node.status}<br/>Alertas: ${node.alerts.length > 0 ? node.alerts.join(", ") : "Sin alertas"}</div>`,
+          content: `<div style=\"font-family:Arial,sans-serif;padding:4px 2px;\"><strong>${node.name}</strong><br/>${node.type}<br/>Usuario: ${node.username ?? "sin credencial"}<br/>Relación: ${relationLabel(node.supplyRelation)}<br/>Estado: ${statusLabel(node.status)}<br/>Alertas: ${node.alerts.length > 0 ? node.alerts.join(", ") : "Sin alertas"}</div>`,
         });
 
         marker.addListener("click", () => infoWindow.open({ map, anchor: marker }));

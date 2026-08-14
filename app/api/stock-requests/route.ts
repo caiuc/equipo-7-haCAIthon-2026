@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Error ejecutando busqueda de stock",
+            : "Error ejecutando búsqueda de stock",
       },
       { status: 400 },
     );

@@ -1,7 +1,7 @@
 const steps = [
   {
     title: "PREDICE",
-    description: "Detecta futuros quiebres en base a cobertura, demanda y reposicion.",
+    description: "Detecta futuros quiebres en base a cobertura, demanda y reposición.",
     color: "bg-cyan-600",
   },
   {

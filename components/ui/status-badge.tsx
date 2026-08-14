@@ -20,13 +20,30 @@ export function StatusBadge({
     CANCELLED: "bg-slate-200 text-slate-700",
   };
 
+  const labels: Record<string, string> = {
+    NORMAL: "Normal",
+    WARNING: "Advertencia",
+    CRITICAL: "Crítico",
+    PENDING: "Pendiente",
+    IN_TRANSIT: "En tránsito",
+    COMPLETED: "Completada",
+    SEARCHING: "Buscando",
+    COVERED: "Cubierta",
+    PARTIALLY_COVERED: "Parcialmente cubierta",
+    FAILED: "Fallida",
+    APPROVED: "Aprobada",
+    ORDERED: "Ordenada",
+    RECEIVED: "Recibida",
+    CANCELLED: "Cancelada",
+  };
+
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
         palette[status] ?? "bg-slate-100 text-slate-700"
       }`}
     >
-      {status}
+      {labels[status] ?? status}
     </span>
   );
 }

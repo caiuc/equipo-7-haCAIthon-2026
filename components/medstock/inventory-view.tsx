@@ -80,9 +80,9 @@ export function InventoryView({ rows }: { rows: Row[] }) {
           className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
         >
           <option value="ALL">Todos los estados</option>
-          <option value="NORMAL">NORMAL</option>
-          <option value="WARNING">WARNING</option>
-          <option value="CRITICAL">CRITICAL</option>
+          <option value="NORMAL">Normal</option>
+          <option value="WARNING">Advertencia</option>
+          <option value="CRITICAL">Crítico</option>
         </select>
       </div>
 
@@ -94,8 +94,8 @@ export function InventoryView({ rows }: { rows: Row[] }) {
               <th className="px-3 py-2 font-medium">Medicamento</th>
               <th className="px-3 py-2 font-medium">Stock actual</th>
               <th className="px-3 py-2 font-medium">Consumo diario</th>
-              <th className="px-3 py-2 font-medium">Dias cobertura</th>
-              <th className="px-3 py-2 font-medium">Proxima reposicion</th>
+              <th className="px-3 py-2 font-medium">Días cobertura</th>
+              <th className="px-3 py-2 font-medium">Próxima reposición</th>
               <th className="px-3 py-2 font-medium">Estado</th>
             </tr>
           </thead>
@@ -109,7 +109,7 @@ export function InventoryView({ rows }: { rows: Row[] }) {
                 <td className="px-3 py-3 text-slate-700">{row.currentStock}</td>
                 <td className="px-3 py-3 text-slate-700">{row.estimatedDailyDemand.toFixed(1)}</td>
                 <td className="px-3 py-3 text-slate-700">{row.coverageDays.toFixed(1)}</td>
-                <td className="px-3 py-3 text-slate-700">{row.daysUntilNextRestock} dias</td>
+                <td className="px-3 py-3 text-slate-700">{row.daysUntilNextRestock} días</td>
                 <td className="px-3 py-3">
                   <StatusBadge status={row.status} />
                 </td>

@@ -251,6 +251,22 @@ export async function runNetworkSearchAndCreateRequest(input: {
       Math.ceil(targetStock - projectedStockAtNextRestock),
     );
 
+    const existingPurchaseRequest = await prisma.purchaseRequest.findFirst({
+      where: {
+        healthCenterId: input.healthCenterId,
+        medicationId: input.medicationId,
+        supplierId: supplierLink.supplierId,
+        status: {
+          in: [
+            PurchaseRequestStatus.PENDING,
+            PurchaseRequestStatus.APPROVED,
+            PurchaseRequestStatus.ORDERED,
+          ],
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
     const requestData = createPurchaseRequest({
       healthCenterId: input.healthCenterId,
       medicationId: input.medicationId,
@@ -258,15 +274,22 @@ export async function runNetworkSearchAndCreateRequest(input: {
       quantity: suggestedPurchaseQuantity,
     });
 
-    const purchaseRequest = await prisma.purchaseRequest.create({
-      data: {
-        healthCenterId: requestData.healthCenterId,
-        medicationId: requestData.medicationId,
-        supplierId: requestData.supplierId,
-        quantity: requestData.quantity,
-        status: requestData.status,
-      },
-    });
+    const purchaseRequest = existingPurchaseRequest
+      ? await prisma.purchaseRequest.update({
+          where: { id: existingPurchaseRequest.id },
+          data: {
+            quantity: requestData.quantity,
+          },
+        })
+      : await prisma.purchaseRequest.create({
+          data: {
+            healthCenterId: requestData.healthCenterId,
+            medicationId: requestData.medicationId,
+            supplierId: requestData.supplierId,
+            quantity: requestData.quantity,
+            status: requestData.status,
+          },
+        });
 
     purchaseRequestResult = {
       id: purchaseRequest.id,
@@ -348,15 +371,12 @@ export async function confirmTransferFromStockRequest(input: { stockRequestId: s
     quantity: number;
   }> = [];
 
-  for (const offer of stockRequest.offers) {
+  for (const offer of stockRequest.offers.filter((entry) => entry.selectedQuantity > 0)) {
     if (remaining <= 0) {
       break;
     }
 
-    const quantity = Math.min(
-      offer.selectedQuantity > 0 ? offer.selectedQuantity : offer.quantityOffered,
-      remaining,
-    );
+    const quantity = Math.min(offer.selectedQuantity, remaining);
 
     if (quantity <= 0) {
       continue;

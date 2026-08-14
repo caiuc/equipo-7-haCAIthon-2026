@@ -63,7 +63,7 @@ export default async function NetworkPage({ searchParams }: PageProps<"/network"
           <>
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
               <p className="font-semibold">Verde</p>
-              <p>Operacion normal</p>
+              <p>Operación normal</p>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <p className="font-semibold">Amarillo</p>
@@ -71,7 +71,7 @@ export default async function NetworkPage({ searchParams }: PageProps<"/network"
             </div>
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
               <p className="font-semibold">Rojo</p>
-              <p>Riesgo critico de quiebre</p>
+              <p>Riesgo crítico de quiebre</p>
             </div>
           </>
         )}

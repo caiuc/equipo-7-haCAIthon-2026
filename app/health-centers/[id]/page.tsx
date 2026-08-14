@@ -66,7 +66,7 @@ export default async function HealthCenterDetailPage({ params }: PageProps) {
 
   return (
     <main className="space-y-6">
-      <Header title={center.name} subtitle={`${center.type} - ${center.address ?? "Sin direccion"}`} />
+      <Header title={center.name} subtitle={`${center.type} - ${center.address ?? "Sin dirección"}`} />
 
       <section className="rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">Inventario completo</h3>
@@ -78,7 +78,7 @@ export default async function HealthCenterDetailPage({ params }: PageProps) {
                 <th className="px-3 py-2 font-medium">Stock</th>
                 <th className="px-3 py-2 font-medium">Demanda diaria</th>
                 <th className="px-3 py-2 font-medium">Cobertura</th>
-                <th className="px-3 py-2 font-medium">Reposicion</th>
+                <th className="px-3 py-2 font-medium">Reposición</th>
                 <th className="px-3 py-2 font-medium">Estado</th>
               </tr>
             </thead>
@@ -103,8 +103,8 @@ export default async function HealthCenterDetailPage({ params }: PageProps) {
                     </td>
                     <td className="px-3 py-3">{inventory.currentStock}</td>
                     <td className="px-3 py-3">{inventory.estimatedDailyDemand.toFixed(1)}</td>
-                    <td className="px-3 py-3">{coverage.toFixed(1)} dias</td>
-                    <td className="px-3 py-3">{nextRestockDays} dias</td>
+                    <td className="px-3 py-3">{coverage.toFixed(1)} días</td>
+                    <td className="px-3 py-3">{nextRestockDays} días</td>
                     <td className="px-3 py-3">
                       <StatusBadge status={status} />
                     </td>
@@ -122,7 +122,7 @@ export default async function HealthCenterDetailPage({ params }: PageProps) {
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
             {center.incomingTransfers.map((transfer) => (
               <li key={transfer.id} className="rounded-xl bg-slate-50 p-3">
-                {transfer.from.name} envio {transfer.quantity} de {transfer.medication.name}
+                {transfer.from.name} envió {transfer.quantity} de {transfer.medication.name}
               </li>
             ))}
             {center.incomingTransfers.length === 0 ? <li>Sin transferencias entrantes</li> : null}
@@ -134,7 +134,7 @@ export default async function HealthCenterDetailPage({ params }: PageProps) {
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
             {center.outgoingTransfers.map((transfer) => (
               <li key={transfer.id} className="rounded-xl bg-slate-50 p-3">
-                {transfer.to.name} recibio {transfer.quantity} de {transfer.medication.name}
+                {transfer.to.name} recibió {transfer.quantity} de {transfer.medication.name}
               </li>
             ))}
             {center.outgoingTransfers.length === 0 ? <li>Sin transferencias salientes</li> : null}

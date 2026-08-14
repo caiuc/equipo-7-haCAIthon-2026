@@ -283,7 +283,7 @@ export async function getNodeInboxOffers(healthCenterId?: string) {
     quantityOffered: offer.quantityOffered,
     selectedQuantity: offer.selectedQuantity,
     distanceKm: offer.distanceKm,
-    status: offer.accepted ? "ACEPTADA" : "AUTO_RESPONDIDA",
+    status: offer.accepted ? "Aceptada" : "Respondida automáticamente",
   }));
 }
 

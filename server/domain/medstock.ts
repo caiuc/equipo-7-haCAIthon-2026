@@ -136,19 +136,6 @@ export function selectTransferOffers(params: {
     return right.availableQuantity - left.availableQuantity;
   });
 
-  const singleCoverage = sortedOffers.find(
-    (offer) => offer.availableQuantity >= params.temporaryDeficit,
-  );
-
-  if (singleCoverage) {
-    return [
-      {
-        ...singleCoverage,
-        selectedQuantity: params.temporaryDeficit,
-      },
-    ];
-  }
-
   const selected: SelectedTransfer[] = [];
   let remaining = params.temporaryDeficit;
 

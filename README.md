@@ -18,21 +18,21 @@ npm run db:seed
 Con esto queda cargado el escenario demo:
 
 - `CESFAM B` con riesgo de quiebre para `Losartan 50 mg`.
-- `CESFAM A` con excedente suficiente para cubrir deficit temporal.
+- `CESFAM A` con excedente suficiente para cubrir déficit temporal.
 
 ## Flujo de demo recomendado
 
 1. Abre `Dashboard`.
-2. Selecciona un nodo de ingreso, por ejemplo `cesfam_b`, con contrasena `password`.
+2. Selecciona un nodo de ingreso, por ejemplo `cesfam_b`, con contraseña `password`.
 3. Pulsa `Preguntar a mi red`.
-4. Revisa las respuestas automaticas de los nodos asociados.
+4. Revisa las respuestas automáticas de los nodos asociados.
 5. Entra como `cesfam_a`, `cosam_san_joaquin` o `cosam_macul` para ver la bandeja automatica del nodo proveedor.
 6. Pulsa `Confirmar transferencia` desde el nodo solicitante.
 7. Verifica el resultado en `Transferencias` y `Compras`.
 
 ## Credenciales del prototipo
 
-Todos los usuarios usan la contrasena `password`.
+Todos los usuarios usan la contraseña `password`.
 
 - `cesfam_a`
 - `cesfam_b`
@@ -42,6 +42,30 @@ Todos los usuarios usan la contrasena `password`.
 - `cosam_macul`
 - `sapu_san_miguel`
 - `hospital_barros_luco_trudeau`
+- `cesfam_la_florida`
+- `cesfam_los_castanos`
+- `cesfam_bellavista`
+- `cesfam_maffioletti`
+- `cesfam_felix_de_amesti`
+- `cesfam_santa_julia`
+- `cesfam_padre_alberto_hurtado`
+- `cesfam_padre_manuel_villaseca`
+- `cesfam_bernardo_leighton`
+- `cesfam_padre_esteban_gumucio`
+- `cosam_la_pintana`
+- `cosam_puente_alto`
+- `cosam_nunoa`
+- `cosam_santiago`
+- `sapu_la_florida`
+- `sar_los_castanos`
+- `sapu_bernardo_leighton`
+- `sapu_padre_esteban_gumucio`
+- `hospital_sotero_del_rio`
+- `hospital_la_florida`
+- `hospital_el_pino`
+- `hospital_san_jose`
+- `hospital_felix_bulnes`
+- `hospital_el_carmen_de_maipu`
 
 ## Base de datos local con Docker
 

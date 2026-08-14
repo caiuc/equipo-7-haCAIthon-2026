@@ -16,6 +16,7 @@ export function NodeLogin({
   const [username, setUsername] = useState(activeUsername ?? nodes[0]?.username ?? "");
   const [password, setPassword] = useState(NODE_PASSWORD);
   const [error, setError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   const activeNode = useMemo(
     () => nodes.find((node) => node.username === activeUsername),
@@ -27,13 +28,37 @@ export function NodeLogin({
     setError(null);
 
     if (password !== NODE_PASSWORD || !nodes.some((node) => node.username === username)) {
-      setError("Credenciales invalidas para el prototipo.");
+      setError("Credenciales inválidas para el prototipo.");
       return;
     }
 
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set("node", username);
     router.push(`/?${nextParams.toString()}`);
+  }
+
+  async function resetDemo() {
+    setResetting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/demo/reset", { method: "POST" });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "No se pudo reiniciar el demo.");
+      }
+
+      router.refresh();
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Error reiniciando el demo.",
+      );
+    } finally {
+      setResetting(false);
+    }
   }
 
   return (
@@ -43,15 +68,15 @@ export function NodeLogin({
           <p className="text-sm font-semibold uppercase text-cyan-700">Ingreso por nodo</p>
           <h3 className="mt-1 text-xl font-semibold text-slate-950">
             {activeNode
-              ? `Sesion simulada: ${activeNode.healthCenterName}`
+              ? `Sesión simulada: ${activeNode.healthCenterName}`
               : "Selecciona el centro de salud"}
           </h3>
           <p className="mt-2 text-sm text-slate-600">
-            Todos los usuarios usan la contrasena <span className="font-mono">password</span>.
+            Todos los usuarios usan la contraseña <span className="font-mono">password</span>.
           </p>
         </div>
 
-        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[minmax(0,260px)_160px_auto]">
+        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[minmax(0,260px)_160px_auto_auto]">
           <select
             value={username}
             onChange={(event) => setUsername(event.target.value)}
@@ -76,6 +101,14 @@ export function NodeLogin({
           >
             Entrar
           </button>
+          <button
+            type="button"
+            onClick={resetDemo}
+            disabled={resetting}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {resetting ? "Reiniciando..." : "Reiniciar"}
+          </button>
         </form>
       </div>
 
@@ -83,4 +116,3 @@ export function NodeLogin({
     </section>
   );
 }
-

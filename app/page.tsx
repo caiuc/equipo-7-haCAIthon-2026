@@ -36,7 +36,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     <main className="space-y-6">
       <Header
         title="Dashboard MedStock"
-        subtitle="Gestion de stock distribuida para la red de salud publica"
+        subtitle="Gestión de stock distribuida para la red de salud pública"
       />
 
       <NodeLogin nodes={accessOptions} activeUsername={activeCenter?.username ?? undefined} />
@@ -78,7 +78,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       ) : (
         <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-900">
           {activeCenter
-            ? "Este nodo no tiene riesgos criticos de quiebre en este momento."
+            ? "Este nodo no tiene riesgos críticos de quiebre en este momento."
             : "Selecciona un nodo para ver su stock, su red y sus solicitudes."}
         </section>
       )}

@@ -22,6 +22,14 @@ const statuses: PurchaseRequestStatus[] = [
   "CANCELLED",
 ];
 
+const statusLabels: Record<PurchaseRequestStatus, string> = {
+  PENDING: "Pendiente",
+  APPROVED: "Aprobada",
+  ORDERED: "Ordenada",
+  RECEIVED: "Recibida",
+  CANCELLED: "Cancelada",
+};
+
 export function PurchaseRequestsView({ rows }: { rows: Row[] }) {
   const [data, setData] = useState(rows);
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -85,7 +93,7 @@ export function PurchaseRequestsView({ rows }: { rows: Row[] }) {
                   >
                     {statuses.map((status) => (
                       <option key={status} value={status}>
-                        {status}
+                        {statusLabels[status]}
                       </option>
                     ))}
                   </select>

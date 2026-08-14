@@ -20,7 +20,7 @@ export async function PATCH(
   };
 
   if (!body.status || !allowedStatus.has(body.status)) {
-    return NextResponse.json({ error: "Estado invalido" }, { status: 400 });
+    return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
   }
 
   const updated = await prisma.purchaseRequest.update({

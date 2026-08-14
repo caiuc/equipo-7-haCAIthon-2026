@@ -1,6 +1,8 @@
 "use client";
 
+import type { PurchaseRequestStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type SearchResult = {
   stockRequestId: string;
@@ -27,7 +29,7 @@ type SearchResult = {
     id: string;
     supplierName: string;
     quantity: number;
-    status: string;
+    status: PurchaseRequestStatus;
   } | null;
 };
 
@@ -62,11 +64,21 @@ export function ResolveStockFlow({
     }
 
     if (searchResult.temporaryDeficit === 0) {
-      return "No hay deficit temporal para este medicamento.";
+      return "No hay déficit temporal para este medicamento.";
     }
 
     return `Necesidad temporal: ${searchResult.temporaryDeficit} unidades`;
   }, [searchResult]);
+
+  const displayedSelectedOffers = useMemo(
+    () =>
+      searchResult
+        ? [...searchResult.selectedOffers].sort(
+            (left, right) => left.quantity - right.quantity,
+          )
+        : [],
+    [searchResult],
+  );
 
   async function runSearch() {
     setLoading(true);
@@ -94,7 +106,7 @@ export function ResolveStockFlow({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Error ejecutando la busqueda de stock",
+          : "Error ejecutando la búsqueda de stock",
       );
     } finally {
       setLoading(false);
@@ -139,11 +151,11 @@ export function ResolveStockFlow({
     <section className="rounded-3xl border border-rose-200 bg-white p-6 shadow-sm">
       <h3 className="text-xl font-semibold text-slate-950">Riesgo detectado</h3>
       <p className="mt-3 text-slate-700">
-        {scenario.healthCenterName} podria quedarse sin {scenario.medicationName} en {" "}
-        {scenario.coverageDays.toFixed(1)} dias.
+        {scenario.healthCenterName} podría quedarse sin {scenario.medicationName} en{" "}
+        {scenario.coverageDays.toFixed(1)} días.
       </p>
       <p className="mt-1 text-slate-700">
-        La proxima reposicion esta programada para dentro de {scenario.daysUntilNextRestock} dias.
+        La próxima reposición está programada para dentro de {scenario.daysUntilNextRestock} días.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-3">
@@ -160,7 +172,7 @@ export function ResolveStockFlow({
           <button
             type="button"
             onClick={confirmTransfer}
-            disabled={loading || searchResult.selectedOffers.length === 0}
+            disabled={loading || transferResult !== null || searchResult.selectedOffers.length === 0}
             className="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Confirmar transferencia
@@ -183,7 +195,7 @@ export function ResolveStockFlow({
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3"
               >
                 <p>
-                  {offer.nodeName} responde automaticamente
+                  {offer.nodeName} responde automáticamente
                 </p>
                 <p className="font-medium">
                   {offer.availableQuantity > 0
@@ -196,16 +208,16 @@ export function ResolveStockFlow({
 
           <div className="rounded-xl bg-white p-4">
             <p className="text-sm text-slate-600">Oferta seleccionada:</p>
-            {searchResult.selectedOffers.length > 0 ? (
+            {displayedSelectedOffers.length > 0 ? (
               <ul className="mt-2 space-y-1 text-sm text-slate-800">
-                {searchResult.selectedOffers.map((offer) => (
+                {displayedSelectedOffers.map((offer) => (
                   <li key={offer.nodeId}>
                     {offer.nodeName} - {offer.quantity} unidades ({offer.distanceKm.toFixed(1)} km)
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-rose-700">No se encontro cobertura en el radio definido.</p>
+              <p className="mt-2 text-sm text-rose-700">No se encontró cobertura en la red definida.</p>
             )}
           </div>
 
@@ -214,7 +226,9 @@ export function ResolveStockFlow({
               <p className="font-semibold">Solicitud de compra generada</p>
               <p className="mt-1">Proveedor: {searchResult.suggestedPurchaseRequest.supplierName}</p>
               <p>Cantidad sugerida: {searchResult.suggestedPurchaseRequest.quantity} unidades</p>
-              <p>Estado: {searchResult.suggestedPurchaseRequest.status}</p>
+              <p className="mt-2">
+                <StatusBadge status={searchResult.suggestedPurchaseRequest.status} />
+              </p>
             </div>
           ) : null}
         </div>
@@ -223,8 +237,8 @@ export function ResolveStockFlow({
       {transferResult ? (
         <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
           <p className="font-semibold">Transferencia confirmada</p>
-          <p className="mt-1">Antes: {transferResult.beforeStock} unidades ({transferResult.beforeCoverageDays.toFixed(1)} dias)</p>
-          <p>Despues: {transferResult.afterStock} unidades ({transferResult.afterCoverageDays.toFixed(1)} dias)</p>
+          <p className="mt-1">Antes: {transferResult.beforeStock} unidades ({transferResult.beforeCoverageDays.toFixed(1)} días)</p>
+          <p>Después: {transferResult.afterStock} unidades ({transferResult.afterCoverageDays.toFixed(1)} días)</p>
           <p className="mt-2 font-medium">Riesgo inmediato cubierto</p>
         </div>
       ) : null}
