@@ -61,3 +61,58 @@ server/          Acciones del servidor e integraciones.
 types/           Tipos de dominio compartidos.
 docs/            Decisiones de arquitectura y flujo funcional.
 ```
+
+## Cómo ejecutar el proyecto
+
+- Requisitos: `node` (>=18), `npm`, y Docker si se utiliza contenedores.
+
+- Desarrollo local (rápido):
+
+```bash
+npm install
+npm run dev
+```
+
+La aplicación queda en http://localhost:3000. Asegúrate de configurar `DATABASE_URL` en tu entorno si usas una base externa.
+
+- Usar Docker (app + Postgres):
+
+```bash
+npm run docker:up
+```
+
+Esto construye la imagen y levanta los servicios definidos en [docker-compose.yml](docker-compose.yml). La app estará en http://localhost:3000 y PostgreSQL queda mapeado en el host en el puerto `5433` (contenedor `5432`).
+
+- Comandos útiles:
+
+```bash
+# Levantar en background
+docker-compose up --build -d
+
+# Ver logs
+docker-compose logs -f
+
+# Parar y eliminar contenedores
+docker-compose down
+
+# Ejecutar migraciones/seed (local o contra la DB en Docker):
+npm run db:migrate
+npm run db:seed
+```
+
+Notas:
+- El `DATABASE_URL` por defecto usado en `docker-compose.yml` es:
+
+```
+postgresql://postgres:postgres@postgres:5432/medstock?schema=public
+```
+
+- Si prefieres controlar migrations manualmente en entorno Docker:
+
+```bash
+docker-compose exec web npx prisma migrate deploy
+docker-compose exec web npm run db:seed
+```
+
+- Si quieres un modo de desarrollo con bind-mount y recarga dentro de Docker, puedo añadir un servicio `web:dev` que monte el código y ejecute `next dev`.
+
