@@ -71,9 +71,6 @@ export function NodeLogin({
               ? `Sesión simulada: ${activeNode.healthCenterName}`
               : "Selecciona el centro de salud"}
           </h3>
-          <p className="mt-2 text-sm text-slate-600">
-            Todos los usuarios usan la contraseña <span className="font-mono">password</span>.
-          </p>
         </div>
 
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[minmax(0,260px)_160px_auto_auto]">
