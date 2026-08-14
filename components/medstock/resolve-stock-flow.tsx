@@ -153,7 +153,7 @@ export function ResolveStockFlow({
           disabled={loading}
           className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Resolver con MedStock
+          Preguntar a mi red
         </button>
 
         {searchResult ? (
@@ -183,7 +183,7 @@ export function ResolveStockFlow({
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3"
               >
                 <p>
-                  Consultando {offer.nodeName}...
+                  {offer.nodeName} responde automaticamente
                 </p>
                 <p className="font-medium">
                   {offer.availableQuantity > 0

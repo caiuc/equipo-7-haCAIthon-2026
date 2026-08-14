@@ -74,16 +74,16 @@ async function main() {
     {
       name: "CESFAM A",
       type: HealthCenterType.CESFAM,
-      address: "Sector Vicuña Mackenna, San Joaquin",
-      latitude: -33.4932,
-      longitude: -70.6007,
+      address: "San Joaquin, cerca del limite con La Florida",
+      latitude: -33.4938,
+      longitude: -70.5908,
     },
     {
       name: "CESFAM B",
       type: HealthCenterType.CESFAM,
-      address: "Limite con La Florida, San Joaquin",
+      address: "San Joaquin, cerca de Macul",
       latitude: -33.4858,
-      longitude: -70.6112,
+      longitude: -70.6001,
     },
     {
       name: "CESFAM C",

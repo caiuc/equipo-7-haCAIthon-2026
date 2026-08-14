@@ -5,10 +5,12 @@ import { useEffect, useMemo, useRef } from "react";
 type Node = {
   id: string;
   name: string;
+  username: string | null;
   type: string;
   latitude: number;
   longitude: number;
   status: "NORMAL" | "WARNING" | "CRITICAL";
+  supplyRelation: "CURRENT" | "IN_NETWORK" | "OUT_OF_NETWORK" | null;
   alerts: string[];
 };
 
@@ -33,7 +35,11 @@ type GoogleMapsRuntime = {
   };
 };
 
-function markerColor(status: Node["status"]) {
+function markerColor(node: Node) {
+  if (node.supplyRelation === "CURRENT") return "#0284c7";
+  if (node.supplyRelation === "IN_NETWORK") return "#16a34a";
+  if (node.supplyRelation === "OUT_OF_NETWORK") return "#dc2626";
+  const status = node.status;
   if (status === "CRITICAL") return "#dc2626";
   if (status === "WARNING") return "#eab308";
   return "#16a34a";
@@ -49,7 +55,6 @@ export function NetworkMap({
   apiKey: string;
 }) {
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const initialized = useRef(false);
 
   const center = useMemo(() => {
     if (nodes.length === 0) {
@@ -71,7 +76,7 @@ export function NetworkMap({
   }, [nodes]);
 
   useEffect(() => {
-    if (!mapRef.current || initialized.current || !apiKey) {
+    if (!mapRef.current || !apiKey) {
       return;
     }
 
@@ -84,6 +89,8 @@ export function NetworkMap({
       if (!googleMaps || !mapRef.current) {
         return;
       }
+
+      mapRef.current.innerHTML = "";
 
       const map = new googleMaps.maps.Map(mapRef.current, {
         center,
@@ -101,7 +108,7 @@ export function NetworkMap({
           title: node.name,
           icon: {
             path: googleMaps.maps.SymbolPath.CIRCLE,
-            fillColor: markerColor(node.status),
+            fillColor: markerColor(node),
             fillOpacity: 1,
             strokeColor: "#0f172a",
             strokeOpacity: 0.5,
@@ -111,7 +118,7 @@ export function NetworkMap({
         });
 
         const infoWindow = new googleMaps.maps.InfoWindow({
-          content: `<div style=\"font-family:Arial,sans-serif;padding:4px 2px;\"><strong>${node.name}</strong><br/>${node.type}<br/>Estado: ${node.status}<br/>Alertas: ${node.alerts.length > 0 ? node.alerts.join(", ") : "Sin alertas"}</div>`,
+          content: `<div style=\"font-family:Arial,sans-serif;padding:4px 2px;\"><strong>${node.name}</strong><br/>${node.type}<br/>Usuario: ${node.username ?? "sin credencial"}<br/>Relacion: ${node.supplyRelation ?? "sin nodo activo"}<br/>Estado: ${node.status}<br/>Alertas: ${node.alerts.length > 0 ? node.alerts.join(", ") : "Sin alertas"}</div>`,
         });
 
         marker.addListener("click", () => infoWindow.open({ map, anchor: marker }));
@@ -130,8 +137,6 @@ export function NetworkMap({
           map,
         });
       });
-
-      initialized.current = true;
     };
 
     if (existingScript) {

@@ -1,5 +1,6 @@
 import { PurchaseRequestStatus, StockRequestStatus, TransferStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getSupplyNetworkForCenter } from "@/lib/node-session";
 import {
   calculateDaysOfCoverage,
   calculateTemporaryDeficit,
@@ -7,13 +8,12 @@ import {
   createPurchaseRequest,
   createTransfer,
   daysUntil,
-  findNearbyNodes,
+  haversineDistanceKm,
   inventoryRiskState,
   selectTransferOffers,
   type TransferOfferCandidate,
 } from "@/server/domain/medstock";
 
-const SEARCH_RADII_KM = [3, 5, 10];
 const TARGET_COVERAGE_DAYS = 30;
 
 type NetworkSearchResult = {
@@ -143,11 +143,15 @@ export async function runNetworkSearchAndCreateRequest(input: {
     },
   });
 
+  const networkCenterNames = getSupplyNetworkForCenter(requesterInventory.healthCenter.name);
+
   const allInventories = await prisma.inventory.findMany({
     where: {
       medicationId: input.medicationId,
-      healthCenterId: {
-        not: input.healthCenterId,
+      healthCenter: {
+        name: {
+          in: networkCenterNames,
+        },
       },
     },
     include: {
@@ -155,34 +159,8 @@ export async function runNetworkSearchAndCreateRequest(input: {
     },
   });
 
-  const discoveredOffers: TransferOfferCandidate[] = [];
-  const consideredNodeIds = new Set<string>();
-
-  for (const radius of SEARCH_RADII_KM) {
-    if (discoveredOffers.reduce((sum, offer) => sum + offer.availableQuantity, 0) >= temporaryDeficit) {
-      break;
-    }
-
-    const candidatesInRadius = findNearbyNodes(
-      requesterInventory.healthCenter,
-      allInventories.map((inventory) => inventory.healthCenter),
-      radius,
-    );
-
-    for (const candidate of candidatesInRadius) {
-      if (consideredNodeIds.has(candidate.candidate.id)) {
-        continue;
-      }
-      consideredNodeIds.add(candidate.candidate.id);
-
-      const candidateInventory = allInventories.find(
-        (inventory) => inventory.healthCenterId === candidate.candidate.id,
-      );
-
-      if (!candidateInventory) {
-        continue;
-      }
-
+  const discoveredOffers = allInventories
+    .map((candidateInventory) => {
       const transferableStock = calculateTransferableStock({
         currentStock: candidateInventory.currentStock,
         estimatedDailyDemand: candidateInventory.estimatedDailyDemand,
@@ -190,15 +168,20 @@ export async function runNetworkSearchAndCreateRequest(input: {
         daysUntilNextRestock: daysUntil(candidateInventory.nextRestockDate),
       });
 
-      discoveredOffers.push({
-        nodeId: candidate.candidate.id,
-        nodeName: candidate.candidate.name,
+      return {
+        nodeId: candidateInventory.healthCenter.id,
+        nodeName: candidateInventory.healthCenter.name,
         medicationId: input.medicationId,
         availableQuantity: transferableStock,
-        distanceKm: Number(candidate.distanceKm.toFixed(2)),
-      });
-    }
-  }
+        distanceKm: Number(
+          haversineDistanceKm(
+            requesterInventory.healthCenter,
+            candidateInventory.healthCenter,
+          ).toFixed(2),
+        ),
+      };
+    })
+    .sort((left, right) => left.distanceKm - right.distanceKm);
 
   const validOffers = discoveredOffers.filter((offer) => offer.availableQuantity > 0);
   const selectedOffers = selectTransferOffers({
@@ -227,9 +210,9 @@ export async function runNetworkSearchAndCreateRequest(input: {
     },
   });
 
-  if (validOffers.length > 0) {
+  if (discoveredOffers.length > 0) {
     await prisma.stockOffer.createMany({
-      data: validOffers.map((offer) => {
+      data: discoveredOffers.map((offer) => {
         const selected = selectedOffers.find((entry) => entry.nodeId === offer.nodeId);
         return {
           stockRequestId: stockRequest.id,
@@ -309,7 +292,7 @@ export async function runNetworkSearchAndCreateRequest(input: {
     daysUntilNextRestock,
     temporaryDeficit,
     requestStatus: finalRequestStatus,
-    offers: validOffers.map((offer) => {
+    offers: discoveredOffers.map((offer) => {
       const selected = selectedOffers.find((entry) => entry.nodeId === offer.nodeId);
       return {
         ...offer,

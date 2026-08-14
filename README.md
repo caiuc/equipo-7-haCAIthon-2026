@@ -23,10 +23,25 @@ Con esto queda cargado el escenario demo:
 ## Flujo de demo recomendado
 
 1. Abre `Dashboard`.
-2. Pulsa `Resolver con MedStock`.
-3. Revisa ofertas de nodos cercanos.
-4. Pulsa `Confirmar transferencia`.
-5. Verifica el resultado en `Transferencias` y `Compras`.
+2. Selecciona un nodo de ingreso, por ejemplo `cesfam_b`, con contrasena `password`.
+3. Pulsa `Preguntar a mi red`.
+4. Revisa las respuestas automaticas de los nodos asociados.
+5. Entra como `cesfam_a`, `cosam_san_joaquin` o `cosam_macul` para ver la bandeja automatica del nodo proveedor.
+6. Pulsa `Confirmar transferencia` desde el nodo solicitante.
+7. Verifica el resultado en `Transferencias` y `Compras`.
+
+## Credenciales del prototipo
+
+Todos los usuarios usan la contrasena `password`.
+
+- `cesfam_a`
+- `cesfam_b`
+- `cesfam_c`
+- `cosam_san_joaquin`
+- `cosam_la_florida`
+- `cosam_macul`
+- `sapu_san_miguel`
+- `hospital_barros_luco_trudeau`
 
 ## Base de datos local con Docker
 
@@ -81,7 +96,7 @@ La aplicación queda en http://localhost:3000. Asegúrate de configurar `DATABAS
 npm run docker:up
 ```
 
-Esto construye la imagen y levanta los servicios definidos en [docker-compose.yml](docker-compose.yml). La app estará en http://localhost:3000 y PostgreSQL queda mapeado en el host en el puerto `5433` (contenedor `5432`).
+Esto construye la imagen y levanta los servicios definidos en [docker-compose.yml](docker-compose.yml). La app estará en http://localhost:3000 y PostgreSQL queda mapeado en el host en el puerto `5432` (contenedor `5432`).
 
 - Comandos útiles:
 

@@ -1,18 +1,78 @@
 import { prisma } from "@/lib/prisma";
 import {
+  getCredentialsForCenter,
+  getHealthCenterNameForUsername,
+  getNodeCredentials,
+  getSupplyNetworkForCenter,
+  getSupplyRelation,
+} from "@/lib/node-session";
+import {
   calculateDaysOfCoverage,
   daysUntil,
   inventoryRiskState,
 } from "@/server/domain/medstock";
 
-export async function getDashboardData() {
+export async function getHealthCenterAccessOptions() {
+  const centers = await prisma.healthCenter.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  const seededCenterNames = new Set(centers.map((center) => center.name));
+
+  return getNodeCredentials().filter((credentials) =>
+    seededCenterNames.has(credentials.healthCenterName),
+  );
+}
+
+export async function getActiveHealthCenter(username?: string | null) {
+  const healthCenterName = getHealthCenterNameForUsername(username);
+
+  if (!healthCenterName) {
+    return null;
+  }
+
+  const center = await prisma.healthCenter.findFirst({
+    where: { name: healthCenterName },
+  });
+
+  if (!center) {
+    return null;
+  }
+
+  return {
+    ...center,
+    username,
+    supplyNetwork: getSupplyNetworkForCenter(center.name),
+  };
+}
+
+export async function getDashboardData(params?: { healthCenterId?: string }) {
   const [centersCount, medsCount, inventoryRows, transfers, purchaseRequests] =
     await Promise.all([
       prisma.healthCenter.count(),
       prisma.medication.count(),
-      prisma.inventory.findMany(),
-      prisma.transfer.findMany({ where: { status: "PENDING" } }),
-      prisma.purchaseRequest.findMany({ where: { status: "PENDING" } }),
+      prisma.inventory.findMany({
+        where: { healthCenterId: params?.healthCenterId },
+      }),
+      prisma.transfer.findMany({
+        where: {
+          status: "PENDING",
+          ...(params?.healthCenterId
+            ? {
+                OR: [
+                  { fromHealthCenterId: params.healthCenterId },
+                  { toHealthCenterId: params.healthCenterId },
+                ],
+              }
+            : {}),
+        },
+      }),
+      prisma.purchaseRequest.findMany({
+        where: {
+          status: "PENDING",
+          healthCenterId: params?.healthCenterId,
+        },
+      }),
     ]);
 
   const risks = inventoryRows.filter((inventory) => {
@@ -82,7 +142,7 @@ export async function getInventoryWithStatus(params?: {
   });
 }
 
-export async function getNetworkNodes() {
+export async function getNetworkNodes(params?: { activeHealthCenterName?: string | null }) {
   const [centers, inventory] = await Promise.all([
     prisma.healthCenter.findMany({
       orderBy: { name: "asc" },
@@ -134,42 +194,47 @@ export async function getNetworkNodes() {
     return {
       id: center.id,
       name: center.name,
+      username: getCredentialsForCenter(center.name)?.username ?? null,
       type: center.type,
       address: center.address,
       latitude: center.latitude,
       longitude: center.longitude,
       status: statusByCenterId.get(center.id) ?? "NORMAL",
+      supplyRelation: getSupplyRelation({
+        activeCenterName: params?.activeHealthCenterName,
+        candidateCenterName: center.name,
+      }),
       alerts: criticalRows.map((row) => row.medication.name),
     };
   });
 }
 
-export async function getFlowScenario() {
-  const center = await prisma.healthCenter.findFirst({
-    where: { name: "CESFAM B" },
-  });
-
-  if (!center) {
-    throw new Error("No existe CESFAM B. Corre el seed de Prisma.");
-  }
-
-  const medication = await prisma.medication.findFirst({
-    where: { name: "Losartan" },
-  });
-
-  if (!medication) {
-    throw new Error("No existe Losartan en la base de datos.");
-  }
-
-  const inventory = await prisma.inventory.findFirst({
+export async function getFlowScenario(params: { healthCenterId: string }) {
+  const rows = await prisma.inventory.findMany({
     where: {
-      healthCenterId: center.id,
-      medicationId: medication.id,
+      healthCenterId: params.healthCenterId,
     },
+    include: {
+      healthCenter: true,
+      medication: true,
+    },
+    orderBy: [{ medication: { name: "asc" } }],
+  });
+
+  const inventory = rows.find((row) => {
+    const daysUntilNextRestock = daysUntil(row.nextRestockDate);
+    return (
+      inventoryRiskState({
+        currentStock: row.currentStock,
+        estimatedDailyDemand: row.estimatedDailyDemand,
+        safetyStockDays: row.safetyStockDays,
+        daysUntilNextRestock,
+      }) === "CRITICAL"
+    );
   });
 
   if (!inventory) {
-    throw new Error("No existe inventario del escenario para CESFAM B.");
+    return null;
   }
 
   const coverageDays = calculateDaysOfCoverage(
@@ -178,14 +243,48 @@ export async function getFlowScenario() {
   );
 
   return {
-    healthCenterId: center.id,
-    medicationId: medication.id,
-    healthCenterName: center.name,
-    medicationName: `${medication.name} ${medication.dosage ?? ""}`.trim(),
+    healthCenterId: inventory.healthCenter.id,
+    medicationId: inventory.medication.id,
+    healthCenterName: inventory.healthCenter.name,
+    medicationName: `${inventory.medication.name} ${inventory.medication.dosage ?? ""}`.trim(),
     currentStock: inventory.currentStock,
     coverageDays,
     daysUntilNextRestock: daysUntil(inventory.nextRestockDate),
   };
+}
+
+export async function getNodeInboxOffers(healthCenterId?: string) {
+  if (!healthCenterId) {
+    return [];
+  }
+
+  const offers = await prisma.stockOffer.findMany({
+    where: {
+      providerHealthCenterId: healthCenterId,
+    },
+    include: {
+      stockRequest: {
+        include: {
+          requesterHealthCenter: true,
+          medication: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return offers.map((offer) => ({
+    id: offer.id,
+    requesterName: offer.stockRequest.requesterHealthCenter.name,
+    medicationName: `${offer.stockRequest.medication.name} ${
+      offer.stockRequest.medication.dosage ?? ""
+    }`.trim(),
+    quantityNeeded: offer.stockRequest.quantityNeeded,
+    quantityOffered: offer.quantityOffered,
+    selectedQuantity: offer.selectedQuantity,
+    distanceKm: offer.distanceKm,
+    status: offer.accepted ? "ACEPTADA" : "AUTO_RESPONDIDA",
+  }));
 }
 
 export async function getTransfers() {

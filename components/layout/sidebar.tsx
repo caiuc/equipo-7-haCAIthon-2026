@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -13,6 +13,8 @@ const links = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeNode = searchParams.get("node");
 
   return (
     <aside className="w-full shrink-0 border-r border-cyan-100 bg-white md:w-72">
@@ -26,7 +28,7 @@ export function Sidebar() {
             return (
               <Link
                 key={link.href}
-                href={link.href}
+                href={activeNode ? `${link.href}?node=${activeNode}` : link.href}
                 className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${
                   active
                     ? "bg-cyan-600 text-white shadow-lg shadow-cyan-600/25"
