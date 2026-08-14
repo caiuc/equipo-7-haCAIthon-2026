@@ -4,10 +4,166 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum HealthCenterType {
+  CESFAM
+  COSAM
+  SAPU
+  HOSPITAL
+}
+
+enum StockRequestStatus {
+  SEARCHING
+  PARTIALLY_COVERED
+  COVERED
+  FAILED
+}
+
+enum TransferStatus {
+  PENDING
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+enum PurchaseRequestStatus {
+  PENDING
+  APPROVED
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+model HealthCenter {
+  id        String   @id @default(uuid())
+  name      String
+  type      HealthCenterType
+  address   String?
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventories Inventory[]
+  consumptions ConsumptionRecord[]
+  outgoingTransfers Transfer[] @relation("outgoing")
+  incomingTransfers Transfer[] @relation("incoming")
+  stockRequests StockRequest[] @relation("requester")
+  stockOffers StockOffer[] @relation("provider")
+  purchaseRequests PurchaseRequest[]
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  name      String
+  dosage    String?
+  unit      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventories Inventory[]
+  consumptions ConsumptionRecord[]
+  suppliers MedicationSupplier[]
+}
+
+model Inventory {
+  id                    String   @id @default(uuid())
+  healthCenter          HealthCenter @relation(fields: [healthCenterId], references: [id])
+  healthCenterId        String
+  medication            Medication @relation(fields: [medicationId], references: [id])
+  medicationId          String
+  currentStock          Int
+  estimatedDailyDemand  Float
+  safetyStockDays       Int
+  nextRestockDate       DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ConsumptionRecord {
+  id              String   @id @default(uuid())
+  healthCenter    HealthCenter @relation(fields: [healthCenterId], references: [id])
+  healthCenterId  String
+  medication      Medication @relation(fields: [medicationId], references: [id])
+  medicationId    String
+  date            DateTime
+  quantityConsumed Int
+}
+
+model Supplier {
+  id        String @id @default(uuid())
+  name      String
+  contactName String?
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  medicationSuppliers MedicationSupplier[]
+  purchaseRequests PurchaseRequest[]
+}
+
+model MedicationSupplier {
+  id           String @id @default(uuid())
+  medication   Medication @relation(fields: [medicationId], references: [id])
+  medicationId String
+  supplier     Supplier @relation(fields: [supplierId], references: [id])
+  supplierId   String
+}
+
+model StockRequest {
+  id                     String @id @default(uuid())
+  requesterHealthCenter  HealthCenter @relation("requester", fields: [requesterHealthCenterId], references: [id])
+  requesterHealthCenterId String
+  medication             Medication @relation(fields: [medicationId], references: [id])
+  medicationId           String
+  quantityNeeded         Int
+  status                 StockRequestStatus @default(SEARCHING)
+  createdAt              DateTime @default(now())
+
+  offers StockOffer[]
+}
+
+model StockOffer {
+  id                  String @id @default(uuid())
+  stockRequest        StockRequest @relation(fields: [stockRequestId], references: [id])
+  stockRequestId      String
+  providerHealthCenter HealthCenter @relation("provider", fields: [providerHealthCenterId], references: [id])
+  providerHealthCenterId String
+  quantityOffered     Int
+  distanceKm          Float
+  accepted            Boolean @default(false)
+  createdAt           DateTime @default(now())
+}
+
+model Transfer {
+  id              String @id @default(uuid())
+  from            HealthCenter @relation("outgoing", fields: [fromHealthCenterId], references: [id])
+  fromHealthCenterId String
+  to              HealthCenter @relation("incoming", fields: [toHealthCenterId], references: [id])
+  toHealthCenterId String
+  medication      Medication @relation(fields: [medicationId], references: [id])
+  medicationId    String
+  quantity        Int
+  status          TransferStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+}
+
+model PurchaseRequest {
+  id            String @id @default(uuid())
+  healthCenter  HealthCenter @relation(fields: [healthCenterId], references: [id])
+  healthCenterId String
+  medication    Medication @relation(fields: [medicationId], references: [id])
+  medicationId  String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  supplierId    String
+  quantity      Int
+  status        PurchaseRequestStatus @default(PENDING)
+  createdAt     DateTime @default(now())
 }
