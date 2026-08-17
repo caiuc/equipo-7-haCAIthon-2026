@@ -1,0 +1,29 @@
+{
+  "name": "MedStock · HaCAithon 2026",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [
+    3000
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Aplicación",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postAttachCommand": {
+    "app": "npm run dev -- --hostname 0.0.0.0"
+  },
+  "customizations": {
+    "codespaces": {
+      "openFiles": [
+        "README.md"
+      ]
+    }
+  },
+  "postCreateCommand": "bash -lc 'sudo service postgresql start && sudo -u postgres psql -c \"ALTER USER postgres PASSWORD '\\''postgres'\\'';\" && sudo -u postgres createdb medstock || true; echo DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/medstock\" > .env; npm install && npx prisma migrate deploy && npm run db:seed'",
+  "features": {
+    "ghcr.io/itsmechlark/features/postgresql:1": {
+      "version": "16"
+    }
+  }
+}
